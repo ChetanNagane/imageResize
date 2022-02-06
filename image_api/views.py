@@ -3,6 +3,8 @@ from rest_framework.views import APIView
 from .models import record
 from .serializer import recordSerializer
 from rest_framework.response import Response
+import django_rq
+from .tasks import long_running_func
 
 # Create your views here.
 class records(APIView):
@@ -16,6 +18,8 @@ class records(APIView):
             return Response(serializer.error_messages)
 
     def get(self, request):
+        queue = django_rq.get_queue('low')
+        queue.enqueue(long_running_func)
         records = record.objects.all()
         serializer = recordSerializer(records, many=True)
         return Response(serializer.data)
